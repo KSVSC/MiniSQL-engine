@@ -36,7 +36,7 @@ def query_error(query):
     if bool(re.match('^select.*from.*', query)) is False:
         print("Error: Input query is wrong")
         return 1
-    if bool(re.match('^select\s(sum|avg|max|min)\(\w\,\w\).*from.*', query)) is True:
+    if bool(re.match('^select\s(sum|avg|max|min)\(.*\w\,.*\w\).*from.*', query)) is True:
         print("Error: Invalid arguments-can't take more than one parameter")
         return 1
     return 0
@@ -48,17 +48,17 @@ def check_table(attributes, tables):
         if len(attr.split('.')) == 2:
             table = attr.split('.')[0]
             if attr.split('.')[1] not in data_dict[table]['attributes']:
-                print("Error: Invalid attribute ", attr)
+                print("Error: Invalid attribute", attr)
                 return 0
         else:
             for table in tables:
                 if attr in data_dict[table]['attributes']:
                     counter += 1
             if counter > 1:
-                print("Error: Inconsistent attribute ", attr)
+                print("Error: Inconsistent attribute", attr)
                 return 0
             elif counter == 0:
-                print("Error: Invalid attribute ", attr)
+                print("Error: Invalid attribute", attr)
                 return 0
     return 1
 
@@ -67,8 +67,8 @@ def join_cond(t1, t2):
     cross_table = {}
     cross_table['attributes'] = []
     cross_table['values'] = []
+    
     temp1 = []
-
     for attr in t1['attributes']:
         if len(attr.split('.')) == 1:
             temp1.append(t1['name'] + '.' + attr)
@@ -76,7 +76,6 @@ def join_cond(t1, t2):
             temp1.append(attr)
 
     temp2 = []
-
     for attr in t2['attributes']:
         if len(attr.split('.')) == 1:
             temp2.append(t2['name'] + '.' + attr)
@@ -93,8 +92,6 @@ def join_cond(t1, t2):
 
 
 def project(tables, cond):
-    print(tables)
-    print(cond)
     result = {}
     result['attributes'] = []
     result['values'] = []
@@ -132,12 +129,11 @@ def project(tables, cond):
             cond = cond.replace(attr, 'row[' + str(join_table['attributes'].index(attr)) + ']')
 
         for row in join_table['values']:
-            # try:
-            #     print(cond)
-            #     eval(cond)
-            # except:
-            #     print('Error: Condition not valid')
-            #     exit()
+            try:
+                eval(cond)
+            except ValueError:
+                print('Error: Condition not valid')
+                exit()
             if eval(cond):
                 result['values'].append(row)
     else:
@@ -187,7 +183,11 @@ def result_query(table1, attr, dist_cond, aggr_func, aggr):
         coln_indices = []
 
         for field in attr:
-            ind = table1['attributes'].index(field)
+            try:
+                ind = table1['attributes'].index(field)
+            except ValueError:
+                print("Error: Condition not valid")
+                exit()
             coln_indices.append(ind)
 
         for row in table1['values']:
@@ -248,7 +248,7 @@ def parse_query(query):
 
     for table in from_query:
         if table not in data_dict:
-            print("Error: Invalid table ", table)
+            print("Error: Invalid table", table)
             return
 
     field_query = copy.deepcopy(select_query)
@@ -281,16 +281,18 @@ def parse_query(query):
         if check_table(condition_attr, from_query) == 0:
             return
 
-        for attr in condition_attr:
-            if len(attr.split('.')) == 1:
+        attr_var = copy.deepcopy(condition_attr)
+        for i in range(len(condition_attr)):
+            if len(condition_attr[i].split('.')) == 1:
                 for t in from_query:
-                    if attr not in data_dict[t]['attributes']:
+                    if condition_attr[i] not in data_dict[t]['attributes']:
                         continue
                     else:
-                        temp1 = t + '.' + attr
-                        temp2 = ' ' + where_query
-                        where_query = re.sub('(?<=[^a-zA-Z0-9])(' + attr + ')(?=[\(\)= ])', temp1, temp2)
-                        where_query = where_query.strip(' ')
+                        condition_attr[i] = t + '.' + condition_attr[i]
+                where_query = where_query.replace(attr_var[i], condition_attr[i])
+                
+        # where_query = re.sub('(?<=[^a-zA-Z0-9])(' + attr + ')(?=[\(\)= ])', temp1, temp2)
+        # where_query = where_query.strip(' ')
         display(result_query(project(from_query, where_query), select_query, dist_cond, aggr_func,aggr))
         
     else:
@@ -298,9 +300,6 @@ def parse_query(query):
             if all_attr is True:
                 display(result_query(project(from_query,1), select_query, dist_cond, aggr_func,aggr))
                 return
-            # elif len(select_query) <= 1:     
-            #     print("Too many arguments for tables")
-            #     return
             else:
                 if check_table(select_query, from_query) == 0:
                     return
@@ -310,13 +309,6 @@ def parse_query(query):
             if all_attr is not True:
                 if check_table(field_query, from_query) == 0:
                     return
-                # for field in select_query:
-                #     if field in data_dict[from_query[0]]['attributes']:
-                #         continue
-                #     else:
-                #         print(field)
-                #         # print("Invalid attribute", field)
-                #         # return
             display(result_query(data_dict[from_query[0]], field_query, dist_cond, aggr_func,aggr))
 
 
