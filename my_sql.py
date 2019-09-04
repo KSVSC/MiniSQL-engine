@@ -131,7 +131,7 @@ def project(tables, cond):
         for row in join_table['values']:
             try:
                 eval(cond)
-            except ValueError:
+            except:
                 print('Error: Condition not valid')
                 exit()
             if eval(cond):
@@ -158,7 +158,11 @@ def result_query(table1, attr, dist_cond, aggr_func, aggr):
     if aggr_func != 0:
         for i in range(aggr_func):
             result_table['attributes'].append(aggr[i] + "(" + attr[i] + ")")
-            coln_index = table1['attributes'].index(attr[i])
+            try:
+                coln_index = table1['attributes'].index(attr[i])
+            except:
+                print("Error: Not valid")
+                exit()
 
             temp = []
             for row in table1['values']:
@@ -185,8 +189,8 @@ def result_query(table1, attr, dist_cond, aggr_func, aggr):
         for field in attr:
             try:
                 ind = table1['attributes'].index(field)
-            except ValueError:
-                print("Error: Condition not valid")
+            except:
+                print("Error: Not valid")
                 exit()
             coln_indices.append(ind)
 
@@ -289,10 +293,9 @@ def parse_query(query):
                         continue
                     else:
                         condition_attr[i] = t + '.' + condition_attr[i]
-                where_query = where_query.replace(attr_var[i], condition_attr[i])
                 
-        # where_query = re.sub('(?<=[^a-zA-Z0-9])(' + attr + ')(?=[\(\)= ])', temp1, temp2)
-        # where_query = where_query.strip(' ')
+                where_query = where_query.replace(attr_var[i], condition_attr[i])
+
         display(result_query(project(from_query, where_query), select_query, dist_cond, aggr_func,aggr))
         
     else:
