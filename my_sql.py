@@ -102,39 +102,44 @@ def project(tables, cond):
     for x in join_table['attributes']:
         result['attributes'].append(x)
 
-    cond = re.sub('(?<=[\w ])(=)(?=[\w ])', '==', cond)
-    cond_str = cond.replace("and", ",")
-    cond_str = cond_str.replace("or", ",").replace("(", '').replace(")", "")
-    cond_str = cond_str.split(',')
+    if cond != 1:    
+        cond = re.sub('(?<=[\w ])(=)(?=[\w ])', '==', cond)
+        cond_str = cond.replace("and", ",")
+        cond_str = cond_str.replace("or", ",").replace("(", '').replace(")", "")
+        cond_str = cond_str.split(',')
 
-    for condition in cond:
-        if bool(re.match('.*==.*[a-zA-Z]+.*', condition.strip())):
-            temp1 = condition.strip()
-            temp1 = (temp1.split("==")[0]).strip()
+        for condition in cond_str:
+            if bool(re.match('.*==.*[a-zA-Z]+.*', condition.strip())):
+                temp1 = condition.strip()
+                temp1 = (temp1.split("==")[0]).strip()
 
-            temp2 = condition.strip()
-            temp2 = (temp2.split("==")[1]).strip()
+                temp2 = condition.strip()
+                temp2 = (temp2.split("==")[1]).strip()
 
-            joint_cond = (temp1, temp2)
-            all_conditions.append(joint_cond)
+                joint_cond = (temp1, temp2)
+                all_conditions.append(joint_cond)
 
-    for attr in join_table['attributes']:
-        cond = cond.replace(attr, 'row[' + str(join_table['attributes'].index(attr)) + ']')
+        for attr in join_table['attributes']:
+            cond = cond.replace(attr, 'row[' + str(join_table['attributes'].index(attr)) + ']')
 
-    for row in join_table['values']:
-        if eval(cond):
+        for row in join_table['values']:
+            if eval(cond):
+                result['values'].append(row)
+    else:
+        for row in join_table['values']:
             result['values'].append(row)
 
     return result
 
 
 def display(table):
-    print("-----------------------------------------------------------")
-    print(' || '.join(table['attributes']), ' || ')
-    print("-----------------------------------------------------------")
+    print("RESULT")
+    print("___________________________________________________________")
+    print(' || ',' || '.join(table['attributes']))
+    print("|___________________________________________________________|")
     for row in table['values']:
-        print(' || '.join([str(x) for x in row]), ' || ')
-        print("-----------------------------------------------------------")
+        print(' || ',' || '.join([str(x) for x in row]))
+        print("|-----------------------------------------------------------|")
 
 
 def result_query(table, attr, dist_cond, aggr_func):
@@ -151,7 +156,7 @@ def result_query(table, attr, dist_cond, aggr_func):
             temp.append(row[coln_index])
 
         aggregate_functions = {'sum': sum(temp), 'avg': (sum(temp) * 1.0) / len(temp), 'max': max(temp), 'min': min(temp)}
-        result_table['attributes'].append([aggregate_functions[aggr_func]])
+        result_table['values'].append([aggregate_functions[aggr_func]])
     
     else:
         if attr[0] == '*':
@@ -178,12 +183,12 @@ def result_query(table, attr, dist_cond, aggr_func):
                 result_row.append(row[i])
             result_table['values'].append(result_row)
 
-        if dist_cond:
-            temp = sorted(result_table['attributes'])
-            result_table['attributes'][:] = []
+        if dist_cond is True:
+            temp = sorted(result_table['values'])
+            result_table['values'][:] = []
             for i in range(len(temp)):
                 if i == 0 or temp[i] != temp[i - 1]:
-                    result_table['attributes'].append(temp[i])
+                    result_table['values'].append(temp[i])
                     
     return result_table
 
@@ -217,8 +222,8 @@ def parse_query(query):
         select_query[i] = select_query[i].strip()
 
     if len(select_query) == 1:
-        select_query[0] = '*'
-        all_attr = True
+        if select_query[0] == '*':
+            all_attr = True
 
     if aggr_func is not None and len(select_query) > 1:
         print("Invalid params in argument")
@@ -278,9 +283,12 @@ def parse_query(query):
         
     else:
         if (len(from_query)) >= 2:
-            print("Too many arguments for tables")
-            return
-        
+            if all_attr is True:
+                display(result_query(project(from_query,1), select_query, dist_cond, aggr_func))
+                return
+            if len(select_query) <= 1:     
+                print("Too many arguments for tables")
+                return
         if all_attr is not True:
             for field in select_query:
                 if field in data_dict[from_query[0]]['attributes']:
