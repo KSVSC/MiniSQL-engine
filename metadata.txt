@@ -12,4 +12,5 @@ D
 <begin_table>
 table3
 D
+E
 <end_table>
