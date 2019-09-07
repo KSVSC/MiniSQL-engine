@@ -155,13 +155,21 @@ def result_query(table1, attr, dist_cond, aggr_func, aggr):
     result_table['attributes'] = []
     result_table['values'] = []
 
+    for l in range(len(attr)):
+        if len(attr[l].split('.')) == 1:
+            attr[l] = table1['name'] + '.' + attr[l]
+                    
+    for i in range(len(table1['attributes'])):
+        if len(table1['attributes'][i].split('.')) == 1:
+            table1['attributes'][i] = table1['name'] + '.' + table1['attributes'][i]
+
     if aggr_func != 0:
         for i in range(aggr_func):
             result_table['attributes'].append(aggr[i] + "(" + attr[i] + ")")
             try:
                 coln_index = table1['attributes'].index(attr[i])
             except:
-                print("Error: Not valid")
+                print("Error: myNot valid")
                 exit()
 
             temp = []
