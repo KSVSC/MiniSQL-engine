@@ -155,9 +155,10 @@ def result_query(table1, attr, dist_cond, aggr_func, aggr):
     result_table['attributes'] = []
     result_table['values'] = []
 
-    for l in range(len(attr)):
-        if len(attr[l].split('.')) == 1:
-            attr[l] = table1['name'] + '.' + attr[l]
+    if len(attr) != 1 or attr[0] != '*':
+        for l in range(len(attr)):
+            if len(attr[l].split('.')) == 1 and attr[0] != "*":
+                attr[l] = table1['name'] + '.' + attr[l]
                     
     for i in range(len(table1['attributes'])):
         if len(table1['attributes'][i].split('.')) == 1:
