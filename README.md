@@ -7,5 +7,7 @@ This mini SQL engine performs query processing like `SELECT`, `PROJECT`, `DISTIN
 ### Usage:
 `python3 minisql.py <"SQL Query;">`
 
+Make sure you maintain case consistency while giving the input-queries. Example, Use SELECT or select but not Select.
+
 ### Acknoledgement
-This was implemented as part of the Database Systems course at IIIIT-Hyderabad.
+This was implemented as part of the Database Systems course at IIIT-Hyderabad.
