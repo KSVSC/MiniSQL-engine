@@ -10,4 +10,4 @@ This mini SQL engine performs query processing like `SELECT`, `PROJECT`, `DISTIN
 Make sure you maintain case consistency while giving the input-queries. Example, Use SELECT or select but not Select.
 
 ### Acknoledgement
-This was implemented as part of the Database Systems course at IIIT-Hyderabad.
+This was built as part of the Database Systems course at IIIT-Hyderabad.
